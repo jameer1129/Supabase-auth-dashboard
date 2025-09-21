@@ -4,14 +4,25 @@ import { supabase } from "@/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import Loader from "@/components/Loader";
 import { useAuth } from "@/context/AuthContext";
 const EditProfile = () => {
   const { user: currentUser, profile: currentProfile } = useAuth();
   const { userId: targetUserId } = useParams();
-  const isAdminEditingOther = targetUserId && currentProfile?.role === "admin" && targetUserId !== currentUser?.id;
+  const isAdminEditingOther =
+    targetUserId &&
+    currentProfile?.role === "admin" &&
+    targetUserId !== currentUser?.id;
   const effectiveUserId = isAdminEditingOther ? targetUserId : currentUser?.id;
 
   const navigate = useNavigate();
@@ -25,7 +36,13 @@ const EditProfile = () => {
     employment: [],
     projects: [],
     skills: [],
-    address: { street: "", city: "", state: "", country: "", postal_code: "" },
+    address: {
+      street: "",
+      city: "",
+      state: "",
+      country: "",
+      postal_code: "",
+    },
     profile_pic: null,
     resume: null,
   });
@@ -86,14 +103,23 @@ const EditProfile = () => {
             employment: profile.employment || [],
             projects: profile.projects || [],
             skills: profile.skills || [],
-            address: profile.address || { street: "", city: "", state: "", country: "", postal_code: "" },
+            address:
+              profile.address || {
+                street: "",
+                city: "",
+                state: "",
+                country: "",
+                postal_code: "",
+              },
             profile_pic: profile.profile_pic || null,
             resume: profile.resume || null,
           });
           setOldProfilePicPath(profile.profile_pic || null);
           setOldResumePath(profile.resume || null);
           if (profile.profile_pic) {
-            const { data } = supabase.storage.from("profiles").getPublicUrl(profile.profile_pic);
+            const { data } = supabase.storage
+              .from("profiles")
+              .getPublicUrl(profile.profile_pic);
             setPreviewPic(data.publicUrl);
           }
           if (profile.resume) {
@@ -130,13 +156,21 @@ const EditProfile = () => {
         toast.error("Profile picture must be an image.");
         return;
       }
-      if (name === "resume" && !["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type)) {
+      if (
+        name === "resume" &&
+        ![
+          "application/pdf",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ].includes(file.type)
+      ) {
         toast.error("Resume must be a PDF or Word document.");
         return;
       }
       setForm((prevForm) => ({
         ...prevForm,
         [name]: file,
+        // ...do not reset other fields!
       }));
 
       if (name === "profile_pic") {
@@ -144,6 +178,7 @@ const EditProfile = () => {
         const newPreview = URL.createObjectURL(file);
         setPreviewPic(newPreview);
       }
+      // Do not reset address, dob, or other fields here!
     } else if (name.includes("address.")) {
       const key = name.split(".")[1];
       setForm((prevForm) => ({
@@ -216,7 +251,7 @@ const EditProfile = () => {
       if (!form.profile_pic) throw new Error("Profile picture is required.");
       if (!form.resume) throw new Error("Resume is required.");
       // All address fields must be filled
-      if (!Object.values(form.address).every(Boolean)) 
+      if (!Object.values(form.address).every(Boolean))
         throw new Error("All address fields are required.");
 
       const profileData = {

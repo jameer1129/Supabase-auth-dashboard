@@ -150,7 +150,7 @@ export default function UserDashboard() {
                     {edu.branch || edu.institution}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {edu.start_year || " "} → {edu.end_year || " "}
+                    {edu.start_year || " "} → {edu.end_year || "present"}
                   </p>
                   <p className="text-sm">
                     Percentage: {edu.percentage}%
