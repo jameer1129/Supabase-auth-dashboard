@@ -445,7 +445,7 @@ const EditProfile = () => {
     <div className="min-h-screen bg-gradient-to-br px-2 py-10">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl font-semibold mb-8 text-center">
-          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `👋 Hi ${form.full_name}`}
+          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `Hi ${form.full_name}`}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Profile Picture */}
