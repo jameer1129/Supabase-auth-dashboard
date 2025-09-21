@@ -17,8 +17,9 @@ const Home = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <h1 className="text-3xl font-bold mb-8 text-center">Welcome to the Dashboard App</h1>
+    <div className="flex flex-wrap flex-col items-center justify-center min-h-screen">
+      <img src="logo.png" alt="Logo" className="w-50" />
+      <h1 className="text-3xl font-bold mb-10 text-center">Welcome to the Dashboard App</h1>
       <div className="flex space-x-4">
         {user ? (
           <>
