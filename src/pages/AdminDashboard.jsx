@@ -104,7 +104,7 @@ const AdminDashboard = () => {
   if (loading || authLoading) return <Loader />;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="p-6 max-w-6xl mx-auto">
       {deletingUserId && <Loader />}
       <div className="flex flex-wrap justify-around md:justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-center mb-2">Admin Dashboard - Manage Users</h1>
