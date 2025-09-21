@@ -406,7 +406,7 @@ const EditProfile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br px-2 py-10">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-extrabold mb-8 text-center drop-shadow">
+        <h2 className="text-2xl font-semibold mb-8 text-center">
           {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `👋 Hi ${form.full_name}`}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-10">
@@ -732,7 +732,7 @@ const EditProfile = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full md:w-auto py-4 text-xl font-bold rounded-xl shadow-lg tracking-wide transition border-blue-700 text-blue-700 hover:bg-blue-50"
+              className="py-4"
               onClick={() => navigate(isAdminEditingOther ? "/admin-dashboard" : "/user-dashboard")}
               disabled={loading  || !currentProfile.profile_complete}
             >
@@ -741,7 +741,7 @@ const EditProfile = () => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full md:w-auto py-4 text-xl font-bold bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white rounded-xl shadow-lg tracking-wide transition"
+              className="py-4"
             >
               {loading ? "Saving..." : "Update Profile"}
             </Button>
