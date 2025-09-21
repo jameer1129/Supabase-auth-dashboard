@@ -4,7 +4,7 @@ import { supabase } from "@/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import Loader from "@/components/Loader";
 import { useAuth } from "@/context/AuthContext";
@@ -13,9 +13,8 @@ const EditProfile = () => {
   const { userId: targetUserId } = useParams();
   const isAdminEditingOther = targetUserId && currentProfile?.role === "admin" && targetUserId !== currentUser?.id;
   const effectiveUserId = isAdminEditingOther ? targetUserId : currentUser?.id;
-
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -111,7 +110,7 @@ const EditProfile = () => {
     return () => {
       mounted = false;
     };
-  }, [currentUser, currentProfile, effectiveUserId, navigate, isAdminEditingOther]);
+  }, [currentUser, effectiveUserId]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -230,14 +229,16 @@ const EditProfile = () => {
         skills: form.skills,
         address: form.address,
       };
-
+      const now = new Date();
+      const kolkataTime = now.toLocaleString("en-GB", { timeZone: "Asia/Kolkata", hour12: false });
+      const formattedTime = kolkataTime.replace(/[\/, :]/g, "_"); 
       if (form.profile_pic && form.profile_pic instanceof File) {
         // Delete old profile pic if exists
         if (oldProfilePicPath && typeof oldProfilePicPath === "string" && oldProfilePicPath !== "") {
           await supabase.storage.from("profiles").remove([oldProfilePicPath]);
         }
         const ext = form.profile_pic.name.split(".").pop();
-        const filePath = `profile_pics/${effectiveUserId}.${ext}`;
+        const filePath = `profile_pics/${formattedTime}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from("profiles")
@@ -266,7 +267,7 @@ const EditProfile = () => {
           await supabase.storage.from("profiles").remove([oldResumePath]);
         }
         const ext = form.resume.name.split(".").pop();
-        const filePath = `resumes/${effectiveUserId}.${ext}`;
+        const filePath = `resumes/${formattedTime}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from("profiles")
@@ -400,14 +401,12 @@ const EditProfile = () => {
       </Dialog>
     );
   };
-
   if (loading) return <Loader />;
-  console.log(previewPic)
   return (
     <div className="min-h-screen bg-gradient-to-br px-2 py-10">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl font-semibold mb-8 text-center">
-          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `👋 Hi ${form.full_name}`}
+          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `Hi ${form.full_name}`}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Profile Picture */}
