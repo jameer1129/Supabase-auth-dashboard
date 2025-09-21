@@ -123,7 +123,9 @@ const EditProfile = () => {
             setPreviewPic(data.publicUrl);
           }
           if (profile.resume) {
-            const { data } = supabase.storage.from("profiles").getPublicUrl(profile.resume);
+            const { data } = supabase.storage
+              .from("profiles")
+              .getPublicUrl(profile.resume);
             setResumeUrl(data.publicUrl);
           }
         }
@@ -167,10 +169,10 @@ const EditProfile = () => {
         toast.error("Resume must be a PDF or Word document.");
         return;
       }
+      // Only update the relevant field, keep others intact
       setForm((prevForm) => ({
         ...prevForm,
         [name]: file,
-        // ...do not reset other fields!
       }));
 
       if (name === "profile_pic") {
@@ -178,7 +180,8 @@ const EditProfile = () => {
         const newPreview = URL.createObjectURL(file);
         setPreviewPic(newPreview);
       }
-      // Do not reset address, dob, or other fields here!
+      // Do not reset any other fields!
+      return;
     } else if (name.includes("address.")) {
       const key = name.split(".")[1];
       setForm((prevForm) => ({
