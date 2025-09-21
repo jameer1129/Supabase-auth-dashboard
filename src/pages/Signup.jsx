@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const Signup = () => {
   const { signUp } = useAuth();
@@ -29,9 +30,9 @@ const Signup = () => {
     signUp(form, navigate); 
   };
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-4">Sign Up</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-2">
+      <Card className="p-8 shadow-md w-full max-w-md">
+        <h2 className="text-2xl text-center font-bold">Sign Up</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Label>Full Name</Label>
           <Input name="full_name" value={form.full_name} onChange={handleChange} required />
@@ -72,15 +73,15 @@ const Signup = () => {
               </a>
             </Label>
           </div>
-          <Button type="submit" className="w-full mt-4">Sign Up</Button>
+          <Button type="submit" className="w-full mt-2">Sign Up</Button>
           <p 
-            className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-4" 
+            className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-2" 
             onClick={() => navigate("/signin")} 
           > 
             Already have an account? Sign In
           </p>
         </form>
-      </div>
+      </Card>
       <h2 
         className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6" 
         onClick={() => navigate("/")} 

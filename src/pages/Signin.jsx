@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const Signin = () => {
   const { signIn } = useAuth();
@@ -21,19 +22,17 @@ const Signin = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-2">
+      <Card className="p-8 shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold text-center">Sign In</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Label>Email</Label>
           <Input
             name="email"
-            type="email"
             value={form.email}
             onChange={handleChange}
             required
           />
-
           <Label>Password</Label>
           <div className="relative">
             <Input
@@ -57,13 +56,13 @@ const Signin = () => {
           </Button>
 
           <p
-            className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-4"
+            className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-2"
             onClick={() => navigate("/signup")}
           >
             Don't have an account? Sign Up
           </p>
         </form>
-      </div>
+      </Card>
 
       <h2
         className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6"

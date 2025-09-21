@@ -174,7 +174,8 @@ const AdminDashboard = () => {
           )}
         </CardContent>
       </Card>
-      <div className="text-center flex justify-center">
+      <div className="text-center flex justify-center flex-col items-center mt-6">
+        <img src="logo.png" alt="Logo" className="h-36 mr-2 " />
         <h2
           className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6"
           onClick={() => navigate("/")}
