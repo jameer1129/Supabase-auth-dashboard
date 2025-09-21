@@ -40,7 +40,9 @@ const AdminDashboard = () => {
     };
 
     fetchUsers();
-  }, [currentProfile, authLoading, navigate]);
+    // Only run once after authLoading is false
+    // eslint-disable-next-line
+  }, [authLoading]);
 
   const handleDelete = async (userId) => {
   if (!window.confirm("Are you sure you want to delete this user?")) return;

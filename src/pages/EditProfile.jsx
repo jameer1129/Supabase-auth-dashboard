@@ -4,29 +4,17 @@ import { supabase } from "@/supabaseClient";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import Loader from "@/components/Loader";
 import { useAuth } from "@/context/AuthContext";
 const EditProfile = () => {
   const { user: currentUser, profile: currentProfile } = useAuth();
   const { userId: targetUserId } = useParams();
-  const isAdminEditingOther =
-    targetUserId &&
-    currentProfile?.role === "admin" &&
-    targetUserId !== currentUser?.id;
+  const isAdminEditingOther = targetUserId && currentProfile?.role === "admin" && targetUserId !== currentUser?.id;
   const effectiveUserId = isAdminEditingOther ? targetUserId : currentUser?.id;
-
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -36,13 +24,7 @@ const EditProfile = () => {
     employment: [],
     projects: [],
     skills: [],
-    address: {
-      street: "",
-      city: "",
-      state: "",
-      country: "",
-      postal_code: "",
-    },
+    address: { street: "", city: "", state: "", country: "", postal_code: "" },
     profile_pic: null,
     resume: null,
   });
@@ -103,29 +85,18 @@ const EditProfile = () => {
             employment: profile.employment || [],
             projects: profile.projects || [],
             skills: profile.skills || [],
-            address:
-              profile.address || {
-                street: "",
-                city: "",
-                state: "",
-                country: "",
-                postal_code: "",
-              },
+            address: profile.address || { street: "", city: "", state: "", country: "", postal_code: "" },
             profile_pic: profile.profile_pic || null,
             resume: profile.resume || null,
           });
           setOldProfilePicPath(profile.profile_pic || null);
           setOldResumePath(profile.resume || null);
           if (profile.profile_pic) {
-            const { data } = supabase.storage
-              .from("profiles")
-              .getPublicUrl(profile.profile_pic);
+            const { data } = supabase.storage.from("profiles").getPublicUrl(profile.profile_pic);
             setPreviewPic(data.publicUrl);
           }
           if (profile.resume) {
-            const { data } = supabase.storage
-              .from("profiles")
-              .getPublicUrl(profile.resume);
+            const { data } = supabase.storage.from("profiles").getPublicUrl(profile.resume);
             setResumeUrl(data.publicUrl);
           }
         }
@@ -139,7 +110,7 @@ const EditProfile = () => {
     return () => {
       mounted = false;
     };
-  }, [currentUser, currentProfile, effectiveUserId, navigate, isAdminEditingOther]);
+  }, [currentUser, effectiveUserId]);
 
   // Handle input changes
   const handleChange = (e) => {
@@ -158,18 +129,10 @@ const EditProfile = () => {
         toast.error("Profile picture must be an image.");
         return;
       }
-      if (
-        name === "resume" &&
-        ![
-          "application/pdf",
-          "application/msword",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        ].includes(file.type)
-      ) {
+      if (name === "resume" && !["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"].includes(file.type)) {
         toast.error("Resume must be a PDF or Word document.");
         return;
       }
-      // Only update the relevant field, keep others intact
       setForm((prevForm) => ({
         ...prevForm,
         [name]: file,
@@ -180,8 +143,6 @@ const EditProfile = () => {
         const newPreview = URL.createObjectURL(file);
         setPreviewPic(newPreview);
       }
-      // Do not reset any other fields!
-      return;
     } else if (name.includes("address.")) {
       const key = name.split(".")[1];
       setForm((prevForm) => ({
@@ -254,7 +215,7 @@ const EditProfile = () => {
       if (!form.profile_pic) throw new Error("Profile picture is required.");
       if (!form.resume) throw new Error("Resume is required.");
       // All address fields must be filled
-      if (!Object.values(form.address).every(Boolean))
+      if (!Object.values(form.address).every(Boolean)) 
         throw new Error("All address fields are required.");
 
       const profileData = {
@@ -438,14 +399,12 @@ const EditProfile = () => {
       </Dialog>
     );
   };
-
   if (loading) return <Loader />;
-  console.log(previewPic)
   return (
     <div className="min-h-screen bg-gradient-to-br px-2 py-10">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl font-semibold mb-8 text-center">
-          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `Hi ${form.full_name}`}
+          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `👋 Hi ${form.full_name}`}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Profile Picture */}
