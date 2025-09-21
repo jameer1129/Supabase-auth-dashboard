@@ -36,7 +36,7 @@ const Home = () => {
         ) : (
           <>
             <Button onClick={() => navigate("/signup")}>Sign Up</Button>
-            <Button variant="secondary" onClick={() => navigate("/signin")}>
+            <Button variant="outline" onClick={() => navigate("/signin")}>
               Sign In
             </Button>
           </>
