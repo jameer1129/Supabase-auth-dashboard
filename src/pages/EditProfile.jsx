@@ -229,14 +229,16 @@ const EditProfile = () => {
         skills: form.skills,
         address: form.address,
       };
-
+      const now = new Date();
+      const kolkataTime = now.toLocaleString("en-GB", { timeZone: "Asia/Kolkata", hour12: false });
+      const formattedTime = kolkataTime.replace(/[\/, :]/g, "_"); 
       if (form.profile_pic && form.profile_pic instanceof File) {
         // Delete old profile pic if exists
         if (oldProfilePicPath && typeof oldProfilePicPath === "string" && oldProfilePicPath !== "") {
           await supabase.storage.from("profiles").remove([oldProfilePicPath]);
         }
         const ext = form.profile_pic.name.split(".").pop();
-        const filePath = `profile_pics/${effectiveUserId}.${ext}`;
+        const filePath = `profile_pics/${formattedTime}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from("profiles")
@@ -265,7 +267,7 @@ const EditProfile = () => {
           await supabase.storage.from("profiles").remove([oldResumePath]);
         }
         const ext = form.resume.name.split(".").pop();
-        const filePath = `resumes/${effectiveUserId}.${ext}`;
+        const filePath = `resumes/${formattedTime}.${ext}`;
 
         const { error: uploadError } = await supabase.storage
           .from("profiles")
