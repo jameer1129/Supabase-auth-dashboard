@@ -151,6 +151,14 @@ const AdminDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="text-white bg-blue-600 hover:bg-white hover:border-blue-500"
+                          onClick={() => navigate(`/user-dashboard/${id}`)}
+                        >
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           className="border-blue-500 text-blue-600 hover:bg-blue-100"
                           onClick={() => navigate(`/edit-profile/${id}`)}
                         >
@@ -177,7 +185,7 @@ const AdminDashboard = () => {
       <div className="text-center flex justify-center flex-col items-center mt-6">
         <img src="logo.png" alt="Logo" className="h-36 mr-2 " />
         <h2
-          className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6"
+          className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-blue-600 hover:text-blue-600 mt-6"
           onClick={() => navigate("/")}
         >
           ← Go to Home

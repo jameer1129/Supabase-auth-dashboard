@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import Loader from "@/components/Loader";
 import { useAuth } from "@/context/AuthContext";
 const EditProfile = () => {
-  const { user: currentUser, profile: currentProfile ,refreshProfile} = useAuth();
+  const { user: currentUser, profile: currentProfile,loading:authLoading, refreshProfile} = useAuth();
   const { userId: targetUserId } = useParams();
   const isAdminEditingOther = targetUserId && currentProfile?.role === "admin" && targetUserId !== currentUser?.id;
   const effectiveUserId = isAdminEditingOther ? targetUserId : currentUser?.id;
@@ -63,6 +63,15 @@ const EditProfile = () => {
       navigate("/");
       return;
     }
+
+    // If user's own profile is already in Auth, use it
+    if (!isAdminEditingOther && currentProfile) {
+      populateFormProfile(currentProfile);
+      setLoading(false);
+      return;
+    }
+
+    // Otherwise fetch profile from Supabase (admin editing or profile not in Auth)
     let mounted = true;
     (async () => {
       try {
@@ -72,46 +81,47 @@ const EditProfile = () => {
           .eq("id", effectiveUserId)
           .single();
 
-        if (profileError) {
-          throw new Error(`Failed to fetch profile: ${profileError.message}`);
-        }
-        if (profile) {
-          setForm({
-            full_name: profile.full_name || "User",
-            email: profile.email || "",
-            phone: profile.phone || "",
-            dob: profile.dob || null,
-            education: profile.education || [],
-            employment: profile.employment || [],
-            projects: profile.projects || [],
-            skills: profile.skills || [],
-            address: profile.address || { street: "", city: "", state: "", country: "", postal_code: "" },
-            profile_pic: profile.profile_pic || null,
-            resume: profile.resume || null,
-          });
-          setOldProfilePicPath(profile.profile_pic || null);
-          setOldResumePath(profile.resume || null);
-          if (profile.profile_pic) {
-            const { data } = supabase.storage.from("profiles").getPublicUrl(profile.profile_pic);
-            setPreviewPic(data.publicUrl);
-          }
-          if (profile.resume) {
-            const { data } = supabase.storage.from("profiles").getPublicUrl(profile.resume);
-            setResumeUrl(data.publicUrl);
-          }
-        }
+        if (profileError) throw new Error(profileError.message);
+
+        if (mounted && profile) populateFormProfile(profile);
       } catch (err) {
-        toast.error(err.message);
+        toast.error(`Failed to fetch profile: ${err.message}`);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
 
-    return () => {
-      mounted = false;
-    };
-  }, [currentUser, effectiveUserId]);
+    return () => (mounted = false);
+  }, [currentUser, effectiveUserId, currentProfile]);
 
+  // Helper to populate form from profile object
+  const populateFormProfile = (profile) => {
+    setForm({
+      full_name: profile.full_name || "User",
+      email: profile.email || "",
+      phone: profile.phone || "",
+      dob: profile.dob || null,
+      education: profile.education || [],
+      employment: profile.employment || [],
+      projects: profile.projects || [],
+      skills: profile.skills || [],
+      address: profile.address || { street: "", city: "", state: "", country: "", postal_code: "" },
+      profile_pic: profile.profile_pic || null,
+      resume: profile.resume || null,
+    });
+
+    setOldProfilePicPath(profile.profile_pic || null);
+    setOldResumePath(profile.resume || null);
+
+    if (profile.profile_pic) {
+      const { data } = supabase.storage.from("profiles").getPublicUrl(profile.profile_pic);
+      setPreviewPic(data.publicUrl);
+    }
+    if (profile.resume) {
+      const { data } = supabase.storage.from("profiles").getPublicUrl(profile.resume);
+      setResumeUrl(data.publicUrl);
+    }
+  };
   // Handle input changes
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -402,18 +412,18 @@ const EditProfile = () => {
       </Dialog>
     );
   };
-  if (loading) return <Loader />;
+  if (loading || authLoading) return <Loader />;
   return (
     <div className="min-h-screen bg-gradient-to-br px-2 py-10">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-2xl font-semibold mb-8 text-center">
-          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `Hi ${form.full_name}`}
-        </h2>
+        <h1 className="text-2xl font-bold text-gray-800 mb-4 text-center">
+          {isAdminEditingOther ? `Editing Profile for ${form.full_name}` : `👋 Hi ${form.full_name}`}
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-10">
           {/* Profile Picture */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Profile Picture</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 🖼️ Profile Picture</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-4 flex justify-center">
@@ -431,7 +441,7 @@ const EditProfile = () => {
           {/* User ID */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">User ID</CardTitle>
+              <CardTitle className="text-blue-800 text-lg">🔥 User ID</CardTitle>
             </CardHeader>
             <CardContent>
               <Input
@@ -447,7 +457,7 @@ const EditProfile = () => {
           {/* Full Name */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Full Name</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 👤 Full Name</CardTitle>
             </CardHeader>
             <CardContent>
               <Input
@@ -463,7 +473,7 @@ const EditProfile = () => {
           {/* Email */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Email</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 📧 Email</CardTitle>
             </CardHeader>
             <CardContent>
               <Input
@@ -478,7 +488,7 @@ const EditProfile = () => {
           {/* Phone */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Phone</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 📱 Phone</CardTitle>
             </CardHeader>
             <CardContent>
               <Input
@@ -493,7 +503,7 @@ const EditProfile = () => {
           {/* DOB */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Date of Birth</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 📅 Date of Birth</CardTitle>
             </CardHeader>
             <CardContent>
               <Input
@@ -509,7 +519,7 @@ const EditProfile = () => {
           {/* Education */}
           <Card className="shadow-lg">
             <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-blue-800 text-lg">Education</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 🎓 Education</CardTitle>
               {renderDialog("education", [
                 { name: "college_name", placeholder: "College Name" },
                 { name: "branch", placeholder: "Branch" },
@@ -551,7 +561,7 @@ const EditProfile = () => {
           {/* Employment */}
           <Card className="shadow-lg">
             <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-blue-800 text-lg">Employment</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 💼 Employment</CardTitle>
               {renderDialog("employment", [
                 { name: "company_name", placeholder: "Company Name" },
                 { name: "role", placeholder: "Role" },
@@ -592,7 +602,7 @@ const EditProfile = () => {
           {/* Projects */}
           <Card className="shadow-lg">
             <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-blue-800 text-lg">Projects</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 📂 Projects</CardTitle>
               {renderDialog("projects", [
                 { name: "project_name", placeholder: "Project Name" },
                 { name: "description", placeholder: "Description" },
@@ -635,7 +645,7 @@ const EditProfile = () => {
           {/* Skills */}
           <Card className="shadow-lg">
             <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-blue-800 text-lg">Skills</CardTitle>
+              <CardTitle className="text-blue-800 text-lg">⭐ Skills</CardTitle>
               {renderDialog("skills", [{ name: "value", placeholder: "Skill Name" }])}
             </CardHeader>
             <CardContent>
@@ -671,7 +681,7 @@ const EditProfile = () => {
           {/* Address */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Address</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 🏠 Address</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -705,7 +715,7 @@ const EditProfile = () => {
           {/* Resume Upload */}
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle className="text-blue-800 text-lg">Resume</CardTitle>
+              <CardTitle className="text-blue-800 text-lg"> 📄 Resume</CardTitle>
             </CardHeader>
             <CardContent>
               <Input
@@ -743,14 +753,14 @@ const EditProfile = () => {
               disabled={loading}
               className="py-4"
             >
-              {loading ? "Saving..." : "Update Profile"}
+              {loading ? " 💾 Saving..." : " 💾 Update Profile"}
             </Button>
           </div>
         </form>
       </div>
       <div className="text-center flex justify-center">
         <h2
-          className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6"
+          className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-blue-600 hover:text-blue-600 mt-6"
           onClick={() => navigate("/")}
         >
           ← Go to Home

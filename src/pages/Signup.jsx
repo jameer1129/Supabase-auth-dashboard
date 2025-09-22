@@ -99,7 +99,7 @@ const Signup = () => {
         </form>
       </Card>
       <h2 
-        className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6" 
+        className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-blue-600 hover:text-blue-600 mt-6" 
         onClick={() => navigate("/")} 
       > 
         ← Go to Home 

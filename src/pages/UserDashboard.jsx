@@ -1,11 +1,27 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Loader from "@/components/Loader";
+import { supabase } from "@/supabaseClient";
+import {
+  User,         // 👤 Full name
+  Mail,         // 📧 Email
+  Phone,        // 📱 Phone
+  Calendar,     // 📅 Date of Birth
+  GraduationCap,// 🎓 Education
+  Briefcase,    // 💼 Employment
+  FolderKanban, // 📂 Projects
+  Star,         // ⭐ Skills
+  Home,         // 🏠 Address
+  FileText,     // 📄 Resume
+  Image,        // 🖼️ Profile Pic
+  Save,         // 💾 Save button
+} from "lucide-react";
 
-// Helper: prepend Supabase storage URL if needed
+// Supabase storage URL
 const supabaseStorageUrl =
   "https://agqovujbdthwbmxabozp.supabase.co/storage/v1/object/public/profiles/";
 
@@ -22,190 +38,205 @@ function getResumeUrl(url) {
 }
 
 export default function UserDashboard() {
-  const { user, profile, loading, initializing, logout } = useAuth();
+  const { user: currentUser, profile: currentProfile, loading: authLoading, initializing: authInitializing, logout } = useAuth();
   const navigate = useNavigate();
+  const { userId: targetUserId } = useParams();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (initializing || loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <p className="text-gray-500">Loading profile...</p>
-      </div>
-    );
-  }
+  const isAdminEditingOther = targetUserId && currentProfile?.role === "admin" && targetUserId !== currentUser?.id;
+  const effectiveUserId = isAdminEditingOther ? targetUserId : currentUser?.id;
 
-  if (!user || !profile) {
+  // Fetch profile
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/signin");
+      return;
+    }
+
+    if (isAdminEditingOther && currentProfile?.role !== "admin") {
+      toast.error("Unauthorized access.");
+      navigate("/");
+      return;
+    }
+
+    let mounted = true;
+    let timeoutId;
+
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        let profileData = currentProfile;
+
+        if (isAdminEditingOther) {
+          const { data, error } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", effectiveUserId)
+            .single();
+          if (error) throw new Error(error.message);
+          profileData = data;
+        }
+
+        if (!mounted) return;
+
+        const normalized = {
+          full_name: profileData.full_name || "User",
+          email: profileData.email || "",
+          phone: profileData.phone || "",
+          dob: profileData.dob || null,
+          education: typeof profileData.education === "string" ? JSON.parse(profileData.education) : profileData.education || [],
+          employment: typeof profileData.employment === "string" ? JSON.parse(profileData.employment) : profileData.employment || [],
+          projects: typeof profileData.projects === "string" ? JSON.parse(profileData.projects) : profileData.projects || [],
+          skills: typeof profileData.skills === "string" ? JSON.parse(profileData.skills) : profileData.skills || [],
+          address: profileData.address || { street: "", city: "", state: "", country: "", postal_code: "" },
+          profile_pic: profileData.profile_pic || null,
+          resume: profileData.resume || null,
+          profile_complete: profileData.profile_complete,
+        };
+
+        setProfile(normalized);
+
+        if (!isAdminEditingOther && !normalized.profile_complete) {
+          timeoutId = setTimeout(() => {
+            toast.info("Please complete your profile");
+            navigate("/edit-profile");
+          }, 100);
+        }
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    fetchProfile();
+
+    return () => {
+      mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [currentUser, currentProfile, effectiveUserId, isAdminEditingOther, navigate]);
+
+  const isLoading = loading || authLoading || authInitializing;
+
+  if (isLoading) return <Loader />;
+
+  if (!currentUser || !profile) {
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-red-500">No profile found. Please log in.</p>
       </div>
     );
   }
-  useEffect(() => {
-    let timeoutId;
-    if (profile.profile_complete === false && profile) {
-        timeoutId = setTimeout(() => {
-        toast.info("Please complete your profile");
-        return navigate("/edit-profile");
-      }, 100);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [profile]);
-  // Parse JSON fields if needed
-  let skills = profile.skills;
-  let education = profile.education;
-  let employment = profile.employment;
-  let projects = profile.projects;
-  try {
-    if (typeof skills === "string") skills = JSON.parse(skills);
-    if (typeof education === "string") education = JSON.parse(education);
-    if (typeof employment === "string") employment = JSON.parse(employment);
-    if (typeof projects === "string") projects = JSON.parse(projects);
-  } catch (e) {
-    // ignore parse errors
-  }
+
+  // Render Card sections
+  const renderCardList = (title, items, renderItem, emptyMessage) => (
+    <Card className="p-6 shadow-lg">
+      <CardHeader>
+        <CardTitle className="text-blue-700">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {items?.length > 0 ? items.map(renderItem) : <p className="text-gray-500">{emptyMessage}</p>}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="max-w-4xl mx-auto px-2 py-10">
       {/* Greeting */}
       <div className="flex flex-wrap justify-around md:justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          Hi {profile.full_name || "User"} 👋
+          {isAdminEditingOther ? `${profile.full_name} Profile Viewing` : `👋 Hi ${profile.full_name}`}
         </h1>
         <div className="space-x-6">
-          <Button onClick={() => navigate("/edit-profile")}>Edit</Button>
+          <Button
+            onClick={() =>
+              isAdminEditingOther ? navigate(`/edit-profile/${targetUserId}`) : navigate("/edit-profile")
+            }
+          >
+            Edit
+          </Button>
           <Button onClick={() => logout(navigate)} variant="destructive">
             Logout
           </Button>
         </div>
       </div>
-      <Card className=" flex flex-wrap flex-row space-x-6 items-center p-6 shadow-lg">
+
+      {/* Profile Card */}
+      <Card className="flex flex-wrap flex-row space-x-6 items-center p-6 shadow-lg">
         <img
           src={getProfilePicUrl(profile.profile_pic)}
           alt="Profile"
           className="w-36 h-36 rounded-full object-cover border-4 border-blue-200 shadow-md"
           onError={(e) => {
             e.target.onerror = null;
-            e.target.src = "/avatar.jpg";
+            e.target.src = "/default-avatar.png";
           }}
         />
         <div>
-          <h2 className="text-xl font-semibold text-gray-800">
-            {profile.full_name || "Unnamed User"}
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-800">{profile.full_name || "Unnamed User"}</h2>
           <p className="text-sm text-gray-500">{profile.email}</p>
           <p className="text-sm text-gray-500">{profile.phone}</p>
-          <p className="text-gray-700">
-            <strong>ID:</strong> {profile.id || "N/A"}
-          </p>
-          <p className="text-gray-700">
-            <strong>Date of Birth:</strong> {profile.dob || "N/A"}
-          </p>
+          <p className="text-gray-700"><strong>ID:</strong> {effectiveUserId || "N/A"}</p>
+          <p className="text-gray-700"><strong>Date of Birth:</strong> {profile.dob || "N/A"}</p>
           <p className="text-gray-700">
             <strong>Address:</strong>{" "}
-            {profile.address
-              ? `${profile.address.street || ""}, ${
-                  profile.address.city || ""
-                }, ${profile.address.state || ""}, ${
-                  profile.address.country || ""
-                } - ${profile.address.postal_code || ""}`
-              : "N/A"}
+            {`${profile.address?.street || ""}, ${profile.address?.city || ""}, ${profile.address?.state || ""}, ${profile.address?.country || ""} - ${profile.address?.postal_code || ""}`}
           </p>
         </div>
       </Card>
-      {/* Right column - Details */}
+
+      {/* Details */}
       <div className="mt-8 space-y-6">
-        {/* Skills */}
-        <Card className="p-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-blue-700">🛠 Skills</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {skills?.length > 0 ? (
-              skills.map((skill, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                >
-                  {typeof skill === "string" ? skill : skill.value}
-                </span>
-              ))
-            ) : (
-              <p className="text-gray-500">No skills added</p>
-            )}
-          </CardContent>
-        </Card>
-        {/* Education */}
-        <Card className="p-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-blue-700">📚 Education</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {education?.length > 0 ? (
-              education.map((edu, i) => (
-                <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-                  <p className="text-gray-700 font-medium">
-                    {edu.college_name || edu.degree} -{" "}
-                    {edu.branch || edu.institution}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {edu.start_year || " "} → {edu.end_year || "present"}
-                  </p>
-                  <p className="text-sm">
-                    Percentage: {edu.percentage}%
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No education details</p>
-            )}
-          </CardContent>
-        </Card>
-        {/* Employment */}
-        <Card className="p-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-blue-700">💼 Employment</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {employment?.length > 0 ? (
-              employment.map((job, i) => (
-                <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-                  <p className="text-gray-700 font-medium">
-                    {job.company_name || job.company} -{" "}
-                    {job.role || job.title}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {job.start_year || job.start_date} →{" "}
-                    {job.end_year || job.end_date || "Present"}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No employment details</p>
-            )}
-          </CardContent>
-        </Card>
-        {/* Projects */}
-        <Card className="p-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-blue-700">🚀 Projects</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {projects?.length > 0 ? (
-              projects.map((proj, i) => (
-                <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-                  <p className="text-gray-700 font-medium">
-                    {proj.project_name || proj.name}
-                  </p>
-                  <p className="text-sm text-gray-500">{proj.description}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No projects</p>
-            )}
-          </CardContent>
-        </Card>
+        {renderCardList(
+          "🛠 Skills",
+          profile.skills,
+          (skill, i) => (
+            <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              {typeof skill === "string" ? skill : skill.value}
+            </span>
+          ),
+          "No skills added"
+        )}
+
+        {renderCardList(
+          "📚 Education",
+          profile.education,
+          (edu, i) => (
+            <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-gray-700 font-medium">{edu.college_name || edu.degree} - {edu.branch || edu.institution}</p>
+              <p className="text-sm text-gray-500">{edu.start_year || " "} → {edu.end_year || "Present"}</p>
+              <p className="text-sm">Percentage: {edu.percentage}%</p>
+            </div>
+          ),
+          "No education details"
+        )}
+
+        {renderCardList(
+          "💼 Employment",
+          profile.employment,
+          (job, i) => (
+            <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-gray-700 font-medium">{job.company_name || job.company} - {job.role || job.title}</p>
+              <p className="text-sm text-gray-500">{job.start_year || job.start_date} → {job.end_year || job.end_date || "Present"}</p>
+            </div>
+          ),
+          "No employment details"
+        )}
+
+        {renderCardList(
+          "🚀 Projects",
+          profile.projects,
+          (proj, i) => (
+            <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
+              <p className="text-gray-700 font-medium">{proj.project_name || proj.name}</p>
+              <p className="text-sm text-gray-500">{proj.description}</p>
+            </div>
+          ),
+          "No projects"
+        )}
+
         {/* Resume */}
         <Card className="p-6 shadow-lg">
           <CardHeader>
@@ -213,12 +244,7 @@ export default function UserDashboard() {
           </CardHeader>
           <CardContent>
             {getResumeUrl(profile.resume) ? (
-              <a
-                href={getResumeUrl(profile.resume)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline"
-              >
+              <a href={getResumeUrl(profile.resume)} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
                 View Uploaded Resume
               </a>
             ) : (
@@ -227,12 +253,14 @@ export default function UserDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="text-center flex justify-center">
+
+      {/* Navigation */}
+      <div className="text-center flex justify-around p-4 mt-6">
         <h2
-          className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-black mt-6"
-          onClick={() => navigate("/")}
+          className="w-fit cursor-pointer border-b border-white transition-all duration-200 hover:border-b hover:border-blue-600 hover:text-blue-600"
+          onClick={() => navigate(isAdminEditingOther ? "/admin-dashboard" : "/")}
         >
-          ← Go to Home
+          ← Go {isAdminEditingOther ? "to Admin" : "to Home"}
         </h2>
       </div>
     </div>
