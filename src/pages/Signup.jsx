@@ -27,6 +27,10 @@ const Signup = () => {
       toast.error("You must accept the Terms & Conditions.");
       return;
     }
+    if (!/^\d{10}$/.test(form.phone)) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
     signUp(form, navigate); 
   };
   return (
