@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/supabaseClient";
 import { toast } from "sonner";
+import Loader from "@/components/Loader";
 
 const AuthContext = createContext();
 
@@ -10,64 +11,56 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
 
-  // Fetch profile only when user changes
-  const fetchProfile = useCallback(async (id) => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.error("Fetch profile error:", error);
-        logout();
-        return;
-      }
-
-      setProfile(prev => {
-        // Only update if different
-        if (JSON.stringify(prev) !== JSON.stringify(data)) return data;
-        return prev;
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  }, []);
-
-  // Initialize session and listen for auth changes
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
-      const currentUser = data.session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) fetchProfile(currentUser.id);
-      setInitializing(false);
+      setUser(data.session?.user ?? null);
+
+      if (data.session?.user) {
+        fetchProfile(data.session.user.id);
+      }
     };
     getSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-
-      setUser(prev => (prev?.id !== currentUser?.id ? currentUser : prev));
-
-      if (currentUser) fetchProfile(currentUser.id);
-      else setProfile(null);
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
     });
-
+    setInitializing(false);
     return () => listener.subscription.unsubscribe();
-  }, [fetchProfile]);
+  }, []);
 
-  // Stable auth functions
-  const signUp = useCallback(async (form, navigate) => {
+  const fetchProfile = async (id) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (error) {
+      console.error("Fetch profile error:", error);
+      logout();
+      return;
+    }
+    setProfile(data);
+  };
+
+  const signUp = async (form, navigate) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
-        options: { data: { full_name: form.full_name, phone: form.phone, email: form.email } },
+        options: {
+          data: { full_name: form.full_name, phone: form.phone ,email: form.email},
+        },
       });
+
       if (error) throw error;
+
       toast.success("Signup successful! Please check your email.");
       if (navigate) navigate("/signin");
     } catch (err) {
@@ -75,15 +68,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  const signIn = useCallback(async (form, navigate) => {
+  const signIn = async (form, navigate) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       });
+
       if (error) throw error;
 
       if (!data.user?.email_confirmed_at) {
@@ -99,29 +93,19 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [fetchProfile]);
+  };
 
-  const logout = useCallback(async (navigate) => {
+  const logout = async (navigate) => {
     toast.success("Logged out successfully!");
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
     if (navigate) navigate("/signin");
-  }, []);
+  };
 
-  // Memoized context value
-  const contextValue = useMemo(() => ({
-    initializing,
-    user,
-    profile,
-    loading,
-    signUp,
-    signIn,
-    logout,
-  }), [initializing, user, profile, loading, signUp, signIn, logout]);
-  console.log(1)
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={{ initializing, user, profile, loading, signUp, signIn, logout }}>
+      {loading && <Loader />}
       {children}
     </AuthContext.Provider>
   );
