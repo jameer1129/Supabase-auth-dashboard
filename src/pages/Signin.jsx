@@ -18,7 +18,13 @@ const Signin = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    signIn(form, navigate);
+
+    const cleanedForm = {
+      email: form.email.trim(),
+      password: form.password.trim(),
+    };
+
+    signIn(cleanedForm, navigate);
   };
 
   return (

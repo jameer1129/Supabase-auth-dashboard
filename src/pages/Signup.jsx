@@ -21,18 +21,30 @@ const Signup = () => {
       [name]: type === "checkbox" ? checked : value
     }));
   };
+
   const handleSubmit = (e) => { 
     e.preventDefault(); 
-    if (!form.terms) {
+    const cleanedForm = {
+      ...form,
+      full_name: form.full_name.trim(),
+      email: form.email.trim(),
+      password: form.password.trim(),
+      phone: form.phone.trim()
+    };
+
+    if (!cleanedForm.terms) {
       toast.error("You must accept the Terms & Conditions.");
       return;
     }
-    if (!/^\d{10}$/.test(form.phone)) {
+
+    if (!/^\d{10}$/.test(cleanedForm.phone)) {
       toast.error("Phone number must be exactly 10 digits.");
       return;
     }
-    signUp(form, navigate); 
+
+    signUp(cleanedForm, navigate); 
   };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-2">
       <Card className="p-8 shadow-md w-full max-w-md">
