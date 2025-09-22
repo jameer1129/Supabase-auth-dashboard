@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import Loader from "@/components/Loader";
 import { useAuth } from "@/context/AuthContext";
 const EditProfile = () => {
-  const { user: currentUser, profile: currentProfile } = useAuth();
+  const { user: currentUser, profile: currentProfile ,refreshProfile} = useAuth();
   const { userId: targetUserId } = useParams();
   const isAdminEditingOther = targetUserId && currentProfile?.role === "admin" && targetUserId !== currentUser?.id;
   const effectiveUserId = isAdminEditingOther ? targetUserId : currentUser?.id;
@@ -318,6 +318,7 @@ const EditProfile = () => {
     } finally {
       setLoading(false);
     }
+    refreshProfile()
   };
 
   // Render dialog form for array fields
