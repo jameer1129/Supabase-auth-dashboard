@@ -130,24 +130,32 @@ export default function UserDashboard() {
     );
   }
 
-  // Render Card sections
-  const renderCardList = (title, items, renderItem, emptyMessage) => (
+  const renderCardList = (title, items, renderItem, emptyMessage, isWrap = false) => (
     <Card className="p-6 shadow-lg">
       <CardHeader>
         <CardTitle className="text-blue-700">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {items?.length > 0 ? items.map(renderItem) : <p className="text-gray-500">{emptyMessage}</p>}
+        {items?.length > 0 ? (
+          isWrap ? (
+            <div className="flex flex-wrap gap-2">{items.map(renderItem)}</div>
+          ) : (
+            <div className="space-y-2">{items.map(renderItem)}</div>
+          )
+        ) : (
+          <p className="text-gray-500">{emptyMessage}</p>
+        )}
       </CardContent>
     </Card>
   );
+
 
   return (
     <div className="max-w-4xl mx-auto px-2 py-10">
       {/* Greeting */}
       <div className="flex flex-wrap justify-around md:justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">
-          {isAdminEditingOther ? `${profile.full_name} Profile Viewing` : `👋 Hi ${profile.full_name}`}
+          {isAdminEditingOther ? `${profile.full_name} - Profile Overview` : `👋 Hi ${profile.full_name}`}
         </h1>
         <div className="space-x-6">
           <Button
@@ -188,43 +196,59 @@ export default function UserDashboard() {
       </Card>
 
       {/* Details */}
-      <div className="mt-8 space-y-6">
+      <div className="mt-8 space-y-6 group-[]:">
+        {/* Skills (flex-wrap for badges) */}
         {renderCardList(
           "🛠 Skills",
           profile.skills,
           (skill, i) => (
-            <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+            <span
+              key={i}
+              className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+            >
               {typeof skill === "string" ? skill : skill.value}
             </span>
           ),
-          "No skills added"
+          "No skills added",
+          true // enable flex-wrap
         )}
 
+        {/* Education */}
         {renderCardList(
           "📚 Education",
           profile.education,
           (edu, i) => (
             <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-              <p className="text-gray-700 font-medium">{edu.college_name || edu.degree} - {edu.branch || edu.institution}</p>
-              <p className="text-sm text-gray-500">{edu.start_year || " "} → {edu.end_year || "Present"}</p>
+              <p className="text-gray-700 font-medium">
+                {edu.college_name || edu.degree} - {edu.branch || edu.institution}
+              </p>
+              <p className="text-sm text-gray-500">
+                {edu.start_year || " "} → {edu.end_year || "Present"}
+              </p>
               <p className="text-sm">Percentage: {edu.percentage}%</p>
             </div>
           ),
           "No education details"
         )}
 
+        {/* Employment */}
         {renderCardList(
           "💼 Employment",
           profile.employment,
           (job, i) => (
             <div key={i} className="bg-gray-50 p-3 rounded-lg shadow-sm">
-              <p className="text-gray-700 font-medium">{job.company_name || job.company} - {job.role || job.title}</p>
-              <p className="text-sm text-gray-500">{job.start_year || job.start_date} → {job.end_year || job.end_date || "Present"}</p>
+              <p className="text-gray-700 font-medium">
+                {job.company_name || job.company} - {job.role || job.title}
+              </p>
+              <p className="text-sm text-gray-500">
+                {job.start_year || job.start_date} → {job.end_year || job.end_date || "Present"}
+              </p>
             </div>
           ),
           "No employment details"
         )}
 
+        {/* Projects */}
         {renderCardList(
           "🚀 Projects",
           profile.projects,

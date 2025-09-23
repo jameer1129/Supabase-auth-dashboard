@@ -9,6 +9,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "sonner";
 import PublicRoute from "@/components/PublicRoute.jsx";
 import EditProfile from "./pages/EditProfile";
+import NotFound from "./pages/NotFound"
+
 function App() {
   return (
     <AuthProvider>
@@ -33,21 +35,21 @@ function App() {
             }
           />
 
-          {/* ✅ Protected user routes */}
-          <Route element={<PrivateRoute allowedRoles={["user", "admin"]} />}>
-            <Route path="/user-dashboard" element={<UserDashboard />} />
-            <Route path="/user-dashboard/:userId" element={<UserDashboard />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route path="/edit-profile/:userId" element={<EditProfile />} />
-          </Route>
-
           {/* ✅ Protected admin route */}
           <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
           </Route>
 
+          {/* ✅ Protected user routes */}
+          <Route element={<PrivateRoute allowedRoles={["user", "admin"]} />}>
+            <Route path="/user-dashboard" element={<UserDashboard />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+            <Route path="/user-dashboard/:userId" element={<UserDashboard />} />
+            <Route path="/edit-profile/:userId" element={<EditProfile />} />
+          </Route>
+
           {/* Fallback */}
-          <Route path="*" element={<h1>Page not found</h1>} />
+          <Route path="*" element={<NotFound/>} />
         </Routes>
       </Router>
       <Toaster richColors position="top-center" />
