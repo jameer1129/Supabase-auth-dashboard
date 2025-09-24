@@ -35,15 +35,15 @@ function App() {
             }
           />
 
+          {/* ✅ Protected user routes */}
+          <Route element={<PrivateRoute allowedRoles={["user"]} />}>
+            <Route path="/user-dashboard" element={<UserDashboard />} />
+            <Route path="/edit-profile" element={<EditProfile />} />
+          </Route>
+
           {/* ✅ Protected admin route */}
           <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          </Route>
-
-          {/* ✅ Protected user routes */}
-          <Route element={<PrivateRoute allowedRoles={["user", "admin"]} />}>
-            <Route path="/user-dashboard" element={<UserDashboard />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
             <Route path="/user-dashboard/:userId" element={<UserDashboard />} />
             <Route path="/edit-profile/:userId" element={<EditProfile />} />
           </Route>
